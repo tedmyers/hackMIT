@@ -25,7 +25,7 @@ void setup(){
 
 cli();//stop interrupts
 
-//set timer1 interrupt at 1Hz
+//set timer1 interrupt at 2Hz
   TCCR1A = 0;// set entire TCCR1A register to 0
   TCCR1B = 0;// same for TCCR1B
   TCNT1  = 0;//initialize counter value to 0

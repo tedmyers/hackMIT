@@ -38,7 +38,6 @@ void setup() {
 #endif
 
   init_timer1();
-
   pixels.begin(); // Initialize NeoPixel Library
 
 //  Serial.begin(9600);
@@ -53,17 +52,9 @@ void setup() {
   // by default, we'll generate the high voltage from the 3.3v line internally
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
   
-  // Set splash screen to start
-  boolean showSplash = 1;
-  
-  //Initialize text
+  //Initialize text, show temporary splash screen
   display.clearDisplay();
   display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-
-  display.clearDisplay();
-  display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
   display.println("Display Test - waiting for input");
@@ -72,13 +63,12 @@ void setup() {
   display.println("Insert message here!");
   display.display();
   
-  delay(1000);
-  showSplash = 0;
+  delay(500);
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-//occurs w/frequency of 2Hz
+  //occurs w/frequency of 2Hz
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_HIGH);
   radio.stopListening();
@@ -95,8 +85,6 @@ ISR(TIMER1_COMPA_vect)
 }
 
 void loop() {
-
-  //sei();//allow interrupts (starts sending packets)
 
   // For now, just test colors
   for(int i=0;i<NUMPIXELS;i++){
@@ -124,7 +112,6 @@ void loop() {
     nCounter++;
   }
 
-  //displayScreen();
   digitalWrite(2, LOW); // turn off LED
 }
 
