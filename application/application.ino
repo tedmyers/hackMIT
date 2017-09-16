@@ -12,7 +12,12 @@
 // Function prototypes
 void init_timer1(void);
 
+// Global Variables
 volatile uint8_t counter;
+uint8_t node_number, faction, happiness_level;
+char data[32] = {0};
+volatile int nCounter = 1;
+char command_string[256] = {0};
 
 // neopixel
 #define PIN            6
@@ -26,9 +31,6 @@ Adafruit_SSD1306 display(OLED_RESET);
 #define LOGO16_GLCD_HEIGHT 16 
 #define LOGO16_GLCD_WIDTH  16 
 
-// stuff
-volatile int nCounter = 1;
-
 RF24 radio(7, 8); // CNS, CE
 const byte address[6] = "00001";
 
@@ -40,7 +42,6 @@ void setup() {
   init_timer1();
   pixels.begin(); // Initialize NeoPixel Library
 
-//  Serial.begin(9600);
   radio.begin();
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_HIGH);
@@ -48,8 +49,7 @@ void setup() {
 
   pinMode(2, OUTPUT);
 
-  //display
-  // by default, we'll generate the high voltage from the 3.3v line internally
+  // OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
   
   //Initialize text, show temporary splash screen
@@ -72,7 +72,8 @@ ISR(TIMER1_COMPA_vect)
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_HIGH);
   radio.stopListening();
-  
+
+  // Send command info string here
   counter++;
   const char text[] = "Hello World";
   char counter_string[16] = {0};
@@ -85,17 +86,24 @@ ISR(TIMER1_COMPA_vect)
 }
 
 void loop() {
-
+  
+  // Send this at 2Hz to all nodes
+  // data, node_number, faction, happiness level
+  // change later
+  node_number=1;faction=2;happiness_level=3;
+  sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
+  
   // For now, just test colors
   for(int i=0;i<NUMPIXELS;i++){
     //RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(255-nCounter,nCounter,255-nCounter));
-
+    pixels.setPixelColor(i, pixels.Color(255,0,0));
     pixels.show(); // This sends the updated pixel color to the hardware.
   }
   
   if (radio.available()) {
-    char text[128] = "";
+    char text[];
+    text = (char *) malloc(128);
+    
     radio.read(&text, sizeof(text));
     digitalWrite(2, HIGH); // flash LED
 
@@ -108,12 +116,15 @@ void loop() {
     display.display();
     //end display stuff
     
-    delay(100);
+    delay(50);
     nCounter++;
   }
 
   digitalWrite(2, LOW); // turn off LED
 }
+
+
+/*  Functions */
 
 void init_timer1()
 {
