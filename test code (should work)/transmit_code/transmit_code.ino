@@ -3,7 +3,6 @@
 *     Example 1 - Transmitter Code
 *                
 * by Dejan Nedelkovski, www.HowToMechatronics.com
-* 
 * Library: TMRh20/RF24, https://github.com/tmrh20/RF24/
 */
 
@@ -15,6 +14,9 @@ RF24 radio(7, 8); // CNS, CE
 
 const byte address[6] = "00001";
 
+uint8_t counter = 0;
+char counter_string[16] = {0};
+
 void setup() {
   radio.begin();
   radio.openWritingPipe(address);
@@ -23,7 +25,9 @@ void setup() {
 }
 
 void loop() {
+  counter++;
   const char text[] = "Hello World";
-  radio.write(&text, sizeof(text));
+  sprintf(counter_string, "Hello World: %d", counter);
+  radio.write(&counter_string, sizeof(counter_string));
   delay(500);
 }

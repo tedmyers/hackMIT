@@ -46,7 +46,7 @@ void setup()
   display.setCursor(0,0);
 }
 
-void loop() 
+void loop()
 {
     display.clearDisplay();
     display.setTextSize(2);
