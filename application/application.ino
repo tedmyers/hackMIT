@@ -17,7 +17,7 @@ volatile uint8_t counter;
 uint8_t node_number, faction, happiness_level;
 char data[32] = {0};
 volatile int nCounter = 1;
-char command_string[256] = {0};
+//char command_string[256] = {0};
 
 // neopixel
 #define PIN            6
@@ -90,8 +90,8 @@ void loop() {
   // Send this at 2Hz to all nodes
   // data, node_number, faction, happiness level
   // change later
-  node_number=1;faction=2;happiness_level=3;
-  sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
+  //node_number=1;faction=2;happiness_level=3;
+  //sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
   
   // For now, just test colors
   for(int i=0;i<NUMPIXELS;i++){
@@ -101,10 +101,11 @@ void loop() {
   }
   
   if (radio.available()) {
-    char text[];
-    text = (char *) malloc(128);
+    char* recv_text;
+    recv_text = (char *) malloc(32);
+    strcpy(recv_text,"test data");
     
-    radio.read(&text, sizeof(text));
+    radio.read(&recv_text, sizeof(recv_text));
     digitalWrite(2, HIGH); // flash LED
 
     // display stuff
@@ -112,9 +113,11 @@ void loop() {
     display.setCursor(0,0);
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.print(text);
+    display.print(recv_text);
     display.display();
     //end display stuff
+
+    free(recv_text);
     
     delay(50);
     nCounter++;
