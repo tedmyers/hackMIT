@@ -35,12 +35,15 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 RF24 radio(7, 8); // CNS, CE
 const byte address[6] = "00001";
+const uint16_t identifier;
 
 void setup() {
 #if defined (__AVR_ATtiny85__)
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
+  randomSeed(analogRead(0));
+  
   init_timer1();
   pixels.begin(); // Initialize NeoPixel Library
 
@@ -50,6 +53,9 @@ void setup() {
   radio.startListening();
 
   pinMode(2, OUTPUT);
+
+  //Generate identifier, from 0 to 2048
+  identifier = random(2048); 
 
   // OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
@@ -78,8 +84,8 @@ void loop() {
   // Send this at 2Hz to all nodes
   // data, node_number, faction, happiness level
   // change later
-//  node_number=1;faction=2;happiness_level=3;
-//  sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
+  //node_number=1;faction=2;happiness_level=3;
+  //sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
   
   // For now, just test colors
   for(int i=0;i<NUMPIXELS;i++){
@@ -89,9 +95,10 @@ void loop() {
   }
   
   if (radio.available()) {
+
     
     radio.read(&recv_text, sizeof(recv_text));
-//    radio.read(&text, sizeof(text));
+
     digitalWrite(2, HIGH); // flash LED
     
     // display stuff
@@ -99,11 +106,9 @@ void loop() {
     display.setCursor(0,0);
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.print(recv_text); //
+    display.print(recv_text);
     display.display();
     //end display stuff
-
-//    free(recv_text);
     
     delay(50);
     nCounter++;
