@@ -33,6 +33,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 RF24 radio(7, 8); // CNS, CE
 const byte address[6] = "00001";
+const uint16_t identifier;
 
 void setup() {
 #if defined (__AVR_ATtiny85__)
@@ -48,6 +49,9 @@ void setup() {
   radio.startListening();
 
   pinMode(2, OUTPUT);
+
+  //Generate identifier, from 0 to 2048
+  identifier = random(2048); 
 
   // OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
