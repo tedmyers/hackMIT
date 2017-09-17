@@ -4,7 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
@@ -19,10 +19,10 @@ char data[32] = {0};
 volatile int nCounter = 1;
 //char command_string[256] = {0};
 
-// neopixel
+// leds
 #define PIN            6
-#define NUMPIXELS      3
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+#define NUMPIXELS      5
+
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -35,15 +35,24 @@ RF24 radio(7, 8); // CNS, CE
 const byte address[6] = "00001";
 const uint16_t identifier;
 
+CRGB leds[NUMPIXELS]; //Array object to hold leds.
+CRGB basicColor;
+CRGB factionColor;
+int brightness;
+
 void setup() {
 #if defined (__AVR_ATtiny85__)
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
   randomSeed(analogRead(0));
+
+  //set initial color
+
+  basicColor = CRGB(random(255), random(255),random(255));
   
   init_timer1();
-  pixels.begin(); // Initialize NeoPixel Library
+  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
 
   radio.begin();
   radio.openReadingPipe(0, address);
@@ -99,11 +108,7 @@ void loop() {
   //node_number=1;faction=2;happiness_level=3;
   //sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
   
-  // For now, just test colors
-  for(int i=0;i<NUMPIXELS;i++){
-    //RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(255,0,0));
-    pixels.show(); // This sends the updated pixel color to the hardware.
+ 
   }
   
   if (radio.available()) {
@@ -155,3 +160,101 @@ void init_timer1()
   sei();//allow interrupts
 }
 
+//Function sets all leds the indicated color. Useful for blackouts or washes.
+void setAll(CRGB color) {
+  for (int i = 0; i < NUMPIXELS; i++)
+  {
+    leds[i] = color;
+  }
+  FastLED.show();
+}
+
+//Function called for the "birth" of the star - plays boot anim. Hardcoded boot anim. Assumes LED 3 is mid.
+void bootAnim() {
+ FastLED.setBrightness(50); //very faint start
+  //blackout
+  setAll(CRGB::Black);
+  
+  delay(500);
+
+  //Single faint red around display (1 and 5) ((subject to changeeee))
+  leds[0] = CRGB::Red;
+  leds[4] = CRGB::Red;
+  FastLED.show();
+
+  delay(350); //flicker
+  setAll(CRGB::Black);
+  delay(75);
+  
+  leds[0] = CRGB::Red;
+  leds[4] = CRGB::Red;
+  FastLED.show();
+
+  delay(400);
+
+  FastLED.setBrightness(100);
+  FastLED.show();
+  delay(300);
+  
+  FastLED.setBrightness(80);
+  FastLED.show();
+  delay(150);
+  
+  FastLED.setBrightness(200);
+  FastLED.show();
+  delay(1500);
+
+  //Flicker
+  FastLED.setBrightness(20);
+  FastLED.show();
+  delay(50);
+
+  FastLED.setBrightness(200);
+  FastLED.show();
+  delay(50);
+
+  FastLED.setBrightness(20);
+  FastLED.show();
+  delay(50);
+
+  FastLED.setBrightness(200);
+  FastLED.show();
+  delay(50);
+
+  CRGB Or = 0xFF8000;
+  //Inner LEDs orange, outer red
+  leds[0] = Or;
+  leds[4] = Or;
+  leds[1] = CRGB::Red;
+  leds[3] = CRGB::Red;
+   FastLED.setBrightness(200);
+  FastLED.show();
+  delay(1250);
+
+  setAll(CRGB::Black);
+  FastLED.show();
+  delay(50);
+  setAll(0xFF8000);
+  FastLED.setBrightness(255);
+
+  FastLED.show();
+
+  delay(2500);
+
+  //Loop a ring around, setting values according to a randomly chosen color and faction. Start at 50% brightness (128).
+  for (int i = 0; i < NUMPIXELS; i++)
+  {
+    if (i == 2)
+    {
+      leds[i] = factionColor;
+      continue;
+    }
+    leds[i] =  basicColor;
+
+    FastLED.show();
+  
+    delay(75);
+  
+  }
+  
+}
