@@ -20,17 +20,20 @@ void choose_faction(void);
 void game_start(void);
 void init_all(void);
 void setAll(CRGB color);
-void bootAnim();
+void bootAnim(void);
+void begin_battle(void);
+void parse_text(char * text);
 
 // Global Variables
 volatile uint8_t counter;
 char data[32] = {0};
 volatile int nCounter = 1;
-char recv_text[64];
+char * recv_text;
 volatile bool transmit_flag = 0;
 char command_string[32] = {0};
 bool start_transmitting = 0;
 uint16_t iii; // counter variable
+char counter_string[64] = {0};
 
 // Defines
 #define BUTTON_PIN 3
@@ -67,22 +70,17 @@ int brightness;
 void setup() {
 
   init_all();
-  
   display_splash();
   delay(500);
-
   choose_faction();
   delay(1000); // pause for a sec
-
   randomSeed(analogRead(0));
   basicColor = CRGB(random(255), random(255),random(255));
 
   // Start animations
   game_start();
-
   bootAnim();
-
-  start_transmitting = 1; //remove later
+  start_transmitting = 1;
 }
 
 ISR(TIMER1_COMPA_vect)
@@ -93,39 +91,26 @@ ISR(TIMER1_COMPA_vect)
 void loop() {
   
   if (radio.available()) {
-    
     radio.read(&recv_text, sizeof(recv_text));
     digitalWrite(2, HIGH); // flash LED
-
-    // display stuff
-    display.clearDisplay();
-    display.setCursor(0,0);
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.print(recv_text);
-    display.display();
-    //end display stuff
+    parse_text(&recv_text);
     
     //delay(50);
     nCounter++;
-
-    //todo: note address, record millis last seen
   }
-
   digitalWrite(2, LOW); // turn off LED
 
   if (transmit_flag)
-  {  
+  { 
     //occurs w/frequency of 2Hz
     radio.openWritingPipe(address);
     radio.setPALevel(RF24_PA_HIGH);
     radio.stopListening();
   
     // Send command info string here
-    counter++;
-    const char text[] = "Hello World";
-    char counter_string[32] = {0};
-    sprintf(counter_string, "%s,%d,%d", text, nodes[0].faction,nodes[0].mode);
+    //counter++;
+    //const char text[] = "Hello World";
+    sprintf(counter_string, "%s,%d,%d", nodes[0].data, nodes[0].faction,nodes[0].mode);
     radio.write(&counter_string, sizeof(counter_string));
   
     radio.openReadingPipe(0, address);
@@ -134,8 +119,7 @@ void loop() {
     transmit_flag = 0;
   }
 
-  // Send this at 2Hz to all nodes
-  // data, node_number, faction, mode
+  // Enable timer to allow transmission
   if (start_transmitting)
   {
       // enable timer compare interrupt (transmission)
@@ -144,7 +128,72 @@ void loop() {
   }
 }
 
+
+
+
+
 /*  Functions */
+
+void parse_text(char * text)
+{
+  //char str[] ="- This, a sample string.";
+  char * tempstr;
+  
+  tempstr = strtok(text,",");
+  char* data = tempstr;
+  tempstr = strtok(text,",");
+  uint8_t faction = atoi(tempstr);
+  tempstr = strtok(text,",");
+  uint8_t mode = atoi(tempstr);
+
+  char * tempstr_data, tempstr_faction, tempstr_mode;
+  sprintf(tempstr_data, "Data: ", data);
+  sprintf(tempstr_faction, "Faction #%d", faction);
+  sprintf(tempstr_mode, "Mode #%d", mode);
+  //sprintf(counter_string, "%s,%d,%d", nodes[0].data, nodes[0].faction,nodes[0].mode);
+  
+  // display stuff
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.print(recv_text);
+  display.display();
+  //end display stuff
+}
+
+void new_node(void)
+{
+  if ( nodes[1].faction == nodes[0].faction )
+  { // gain +1 brightness
+    
+  }
+  else // opposing faction
+  {
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.print("You face an opposing faction. Do you choose to fight?");
+    display.display();
+
+    
+     if ( digitalRead(BUTTON_PIN) == LOW )
+  {
+    iii=0;
+    while ( digitalRead(BUTTON_PIN) == LOW )
+    {
+      iii++;
+      delay(1);
+      if (iii>=3000)
+      {
+        nodes[0].mode = BATTLE_MODE;
+      }
+    }
+  }
+  }
+}
+
 
 void init_all(void)
 {
@@ -419,5 +468,14 @@ void bootAnim() {
     FastLED.show();
     delay(75);
   }
+}
+
+void begin_battle(void)
+{
+  //TODO: fill
+
+  // Wait for up to (10s?) for another player to enter battle mode
+
+
 }
 
