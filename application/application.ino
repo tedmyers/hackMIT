@@ -5,6 +5,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <FastLED.h>
+#include <Pitches.h>
+s
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
@@ -81,6 +83,18 @@ CRGB leds[NUMPIXELS]; //Array object to hold leds.
 CRGB basicColor;
 CRGB factionColor;
 int brightness;
+
+
+//Music 
+int happy[] = { NOTE_C4, NOTE_E4, NOTE_G4, NOTE_C5};
+int noteDurationsHappy[] = {4, 4, 4, 1.5};
+
+int SAD[] = { NOTE_C5, NOTE_B4, NOTE_AS4};
+int noteDurationsSad[] = {2, 2, 1};
+
+
+int INTRO[] = {NOTE_C4, NOTE_E4, NOTE_G4, NOTE_D4, NOTE_F4, NOTE_A4, NOTE_E4, NOTE_G4, NOTE_B4, NOTE_C5};
+int noteDurationsIntro[] = { 4, 4, 4, 4, 4, 4, 4, 4, 4, 1};
 
 void setup() {
 #if defined (__AVR_ATtiny85__)
@@ -445,29 +459,48 @@ void bootAnim() {
 
   FastLED.show();
 
-  delay(2500);
+  // iterate over the notes of the melody:
+  for (int thisNote = 0; thisNote < 11; thisNote++) {
 
-  //Loop a ring around, setting values according to a randomly chosen color and faction. Start at 50% brightness (128).
-  for (int i = 0; i < NUMPIXELS; i++)
-  {
-    if (i == 2)
-    {
-      leds[i] = factionColor;
-      continue;
-    }
-    leds[i] =  basicColor;
+    // to calculate the note duration, take one second divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000 / noteDurationsIntro[thisNote];
+    tone(5, INTRO[thisNote], noteDuration);
 
-    FastLED.show();
-  
-    delay(75);
-  
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noTone(5);
   }
 
-  FastLED.setBrightness(brightness);
+
+  
+  delay(1000);
+
+  normalState();
   
 }
 
 void happy() {
+
+  // iterate over the notes of the melody:
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+    // to calculate the note duration, take one second divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000 / noteDurationsHappy[thisNote];
+    tone(5, happy[thisNote], noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noTone(5);
+  }
+  
   int delayTime = 150; //delay time in ms
   //Single dot chase.
 
@@ -548,6 +581,20 @@ void happy() {
 }
 
 void sad() {
+  // iterate over the notes of the melody:
+  for (int thisNote = 0; thisNote < 4; thisNote++) {
+
+    // to calculate the note duration, take one second divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000 / noteDurationsSad[thisNote];
+    tone(5, SAD[thisNote], noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+  }
   int delayTime = 150; //delay time in ms
   //Single dot chase.
 
@@ -622,4 +669,28 @@ void sad() {
   FastLED.show();
 
   delay(300);
+
+  normalState();
 }
+
+void normalState() {
+  //Loop a ring around, setting values according to a randomly chosen color and faction. Start at 50% brightness (128).
+  for (int i = 0; i < NUMPIXELS; i++)
+  {
+    if (i == 2)
+    {
+      leds[i] = factionColor;
+      continue;
+    }
+    leds[i] =  basicColor;
+
+    FastLED.show();
+  
+    delay(75);
+  
+  }
+
+  FastLED.setBrightness(brightness);
+  FastLED.show();
+}
+
