@@ -34,7 +34,7 @@ uint16_t iii; // counter variable
 #define MAX_NODES       3
 #define PIN             6
 #define NUMPIXELS       5
-#define OLED_RESET 4
+#define OLED_RESET      4
 
 // Struct with node data
 struct node {
@@ -60,6 +60,8 @@ void setup() {
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
+  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
+
   pinMode(2, OUTPUT); //LED
   pinMode(BUTTON_PIN, INPUT);
   digitalWrite(BUTTON_PIN, HIGH);
@@ -74,16 +76,9 @@ void setup() {
   // Ask for faction
   choose_faction();
   delay(1000); // pause for a sec
-
-//  //Generate identifier, from 0 to 2048
-//  pinMode(0, INPUT);
-//  randomSeed(analogRead(0));
-//  nodes[0].node_number = random(2048);
   
   randomSeed(analogRead(0));
 
-  //set initial color
-  basicColor = CRGB(random(255), random(255),random(255));
   if (nodes[0].faction == RED_FACTION) { //red
     factionColor = CRGB::Red;
   }
@@ -103,7 +98,7 @@ void setup() {
   }
   
   init_timer1();
-  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
+
 
   radio.begin();
   radio.openReadingPipe(0, address);
@@ -112,6 +107,8 @@ void setup() {
 
   // Start animations
   game_start();
+
+  bootAnim();
 
   start_transmitting = 1; //remove later
 }
@@ -237,18 +234,22 @@ void choose_faction(void)
   {
     for (iii=0;iii<1000;iii++)
     {
-      //TODO: show red LEDs
+      setAll(CRGB::Red);
       if ( digitalRead(BUTTON_PIN) == LOW )
       { 
         nodes[0].faction = RED_FACTION;
         break;
       }
+      
       delay(1);
     }
+
+    if (nodes[0].faction == RED_FACTION)
+      { break; }
     
     for (iii=0;iii<1000;iii++)
     {
-      //TODO: show blue LEDs
+      setAll(CRGB::Blue);
       if ( digitalRead(BUTTON_PIN) == LOW )
       { 
         nodes[0].faction = BLUE_FACTION; 
