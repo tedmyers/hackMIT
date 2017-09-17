@@ -17,7 +17,7 @@ void game_start(void);
 
 // Global Variables
 volatile uint8_t counter;
-uint8_t node_number, faction, happiness_level;
+//uint8_t node_number, faction, happiness_level;
 char data[32] = {0};
 volatile int nCounter = 1;
 char recv_text[64];
@@ -26,13 +26,15 @@ char command_string[32] = {0};
 bool start_transmitting = 0;
 uint16_t iii; // counter variable
 
+// Defines
 #define BUTTON_PIN 3
-
-#define UNDEF_FACTION 0
-#define RED_FACTION   1
-#define BLUE_FACTION  2
-
-#define MAX_NODES 3
+#define UNDEF_FACTION   0
+#define RED_FACTION     1
+#define BLUE_FACTION    2
+#define MAX_NODES       3
+#define PIN             6
+#define NUMPIXELS       5
+#define OLED_RESET 4
 
 // Struct with node data
 struct node {
@@ -43,36 +45,7 @@ struct node {
 //  uint32_t last_seen;
 } nodes[MAX_NODES];
 
-// leds
-#define PIN            6
-#define NUMPIXELS      5
-
-
-#define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
-
-// graphics?
-
-static const unsigned char PROGMEM logo16_glcd_bmp[] =
-{ B00000000, B11000000,
-  B00000001, B11000000,
-  B00000001, B11000000,
-  B00000011, B11100000,
-  B11110011, B11100000,
-  B11111110, B11111000,
-  B01111110, B11111111,
-  B00110011, B10011111,
-  B00011111, B11111100,
-  B00001101, B01110000,
-  B00011011, B10100000,
-  B00111111, B11100000,
-  B00111111, B11110000,
-  B01111100, B11110000,
-  B01110000, B01110000,
-  B00000000, B00110000 };
-
-
-
 
 RF24 radio(7, 8); // CNS, CE
 const byte address[6] = "00001";
@@ -87,39 +60,6 @@ void setup() {
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
-
-//  // miniature bitmap display
-//  display.clearDisplay();
-//  display.drawBitmap(32, 0,  sun16_glcd_bmp, 64, 64, 1);
-//  display.display();
-//  while(1); // remove later
-
-//  //Generate identifier, from 0 to 2048
-//  pinMode(0, INPUT);
-//  randomSeed(analogRead(0));
-//  nodes[0].node_number = random(2048);
-  
-
-  randomSeed(analogRead(0));
-
-  //set initial color
-
-  basicColor = CRGB(random(255), random(255),random(255));
-  if (node[0].faction == 1) { //red
-    factionColor = CRGB::Red;
-  }
-  else { //blue
-    factionColor = CRGB::Blue;
-  }
-  
-  init_timer1();
-  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
-
-  radio.begin();
-  radio.openReadingPipe(0, address);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.startListening();
-  
   pinMode(2, OUTPUT); //LED
   pinMode(BUTTON_PIN, INPUT);
   digitalWrite(BUTTON_PIN, HIGH);
@@ -135,6 +75,41 @@ void setup() {
   choose_faction();
   delay(1000); // pause for a sec
 
+//  //Generate identifier, from 0 to 2048
+//  pinMode(0, INPUT);
+//  randomSeed(analogRead(0));
+//  nodes[0].node_number = random(2048);
+  
+  randomSeed(analogRead(0));
+
+  //set initial color
+  basicColor = CRGB(random(255), random(255),random(255));
+  if (nodes[0].faction == RED_FACTION) { //red
+    factionColor = CRGB::Red;
+  }
+  else if (nodes[0].faction == BLUE_FACTION)
+  {
+    factionColor = CRGB::Blue;
+  }
+  else
+  {
+    //error
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.print("err: no faction defined");
+    display.display();
+  }
+  
+  init_timer1();
+  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
+
+  radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_HIGH);
+  radio.startListening();
+
   // Start animations
   game_start();
 
@@ -147,20 +122,6 @@ ISR(TIMER1_COMPA_vect)
 }
 
 void loop() {
-  
-
-  // Ask to choose faction
-  // 
-
-  // For now just test colors
-  for(int i=0;i<NUMPIXELS;i++){
-    //RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(255,0,0));
-    pixels.show(); // This sends the updated pixel color to the hardware.
-
- 
-
-  }
   
   if (radio.available()) {
     
