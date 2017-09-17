@@ -15,8 +15,8 @@ void init_timer1(void);
 // Global Variables
 volatile uint8_t counter;
 uint8_t node_number, faction, happiness_level;
-char data[32] = {0};
 volatile int nCounter = 1;
+volatile bool transmit_flag = 0;
 //char command_string[256] = {0};
 
 // neopixel
@@ -66,23 +66,10 @@ void setup() {
   delay(500);
 }
 
+// Occurs 2kHz
 ISR(TIMER1_COMPA_vect)
 {
-  //occurs w/frequency of 2Hz
-  radio.openWritingPipe(address);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.stopListening();
-
-  // Send command info string here
-  counter++;
-  const char text[] = "Hello World";
-  char counter_string[16] = {0};
-  sprintf(counter_string, "Hello World: %d", counter);
-  radio.write(&counter_string, sizeof(counter_string));
-
-  radio.openReadingPipe(0, address);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.startListening();
+  transmit_flag = 1;
 }
 
 void loop() {
@@ -101,10 +88,9 @@ void loop() {
   }
   
   if (radio.available()) {
-    char* recv_text;
-    recv_text = (char *) malloc(32);
+    char* recv_text = (char *) malloc(32);
     strcpy(recv_text,"test data");
-    
+
     radio.read(&recv_text, sizeof(recv_text));
     digitalWrite(2, HIGH); // flash LED
 
@@ -124,6 +110,28 @@ void loop() {
   }
 
   digitalWrite(2, LOW); // turn off LED
+
+  if (transmit_flag)
+  {
+    //occurs w/frequency of 2Hz
+    radio.openWritingPipe(address);
+    radio.setPALevel(RF24_PA_HIGH);
+    radio.stopListening();
+  
+    // Send command info string here
+    counter++;
+    const char text[] = "Hello World";
+    char* counter_string = (char *) malloc(32);
+    sprintf(counter_string, "Hello World: %d", counter);
+    radio.write(&counter_string, sizeof(counter_string));
+    free(counter_string);
+  
+    radio.openReadingPipe(0, address);
+    radio.setPALevel(RF24_PA_HIGH);
+    radio.startListening();
+  }
+
+
 }
 
 
