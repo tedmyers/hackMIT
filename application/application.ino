@@ -17,9 +17,21 @@ volatile uint8_t counter;
 uint8_t node_number, faction, happiness_level;
 char data[32] = {0};
 volatile int nCounter = 1;
-char recv_text[32];
+char recv_text[64];
 volatile bool transmit_flag = 0;
-//char command_string[256] = {0};
+char command_string[32] = {0};
+bool start_transmitting = 0;
+
+#define MAX_NODES 3
+
+// Struct with node data
+struct node {
+  char data[8];
+//  uint8_t node_number;
+  uint8_t faction;
+  uint8_t mode;
+//  uint32_t last_seen;
+} nodes[MAX_NODES];
 
 // neopixel
 #define PIN            6
@@ -30,35 +42,34 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 Adafruit_SSD1306 display(OLED_RESET);
 
 // For screensaver
-#define LOGO16_GLCD_HEIGHT 16 
-#define LOGO16_GLCD_WIDTH  16 
+#define LOGO16_GLCD_HEIGHT 16
+#define LOGO16_GLCD_WIDTH  16
 
 RF24 radio(7, 8); // CNS, CE
 const byte address[6] = "00001";
-uint16_t identifier;
 
 void setup() {
 #if defined (__AVR_ATtiny85__)
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
-  randomSeed(analogRead(0));
+//  //Generate identifier, from 0 to 2048
+//  pinMode(0, INPUT);
+//  randomSeed(analogRead(0));
+//  nodes[0].node_number = random(2048);
   
   init_timer1();
   pixels.begin(); // Initialize NeoPixel Library
-
+  
   radio.begin();
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_HIGH);
   radio.startListening();
 
   pinMode(2, OUTPUT);
-
-  //Generate identifier, from 0 to 2048
-  identifier = random(2048); 
-
+  
   // OLED display
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr for the 128x64
   
   //Initialize text, show temporary splash screen
   display.clearDisplay();
@@ -72,6 +83,12 @@ void setup() {
   display.display();
   
   delay(500);
+
+  // Start animations
+
+  // Ask for faction
+
+  start_transmitting = 1; //remove later
 }
 
 ISR(TIMER1_COMPA_vect)
@@ -81,13 +98,10 @@ ISR(TIMER1_COMPA_vect)
 
 void loop() {
   
-  // Send this at 2Hz to all nodes
-  // data, node_number, faction, happiness level
-  // change later
-  //node_number=1;faction=2;happiness_level=3;
-  //sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
-  
-  // For now, just test colors
+  // Ask to choose faction
+  // 
+
+  // For now just test colors
   for(int i=0;i<NUMPIXELS;i++){
     //RGB values, from 0,0,0 up to 255,255,255
     pixels.setPixelColor(i, pixels.Color(255,0,0));
@@ -108,9 +122,13 @@ void loop() {
     display.display();
     //end display stuff
     
-    delay(50);
+    //delay(50);
     nCounter++;
+
+    //todo: note address, record millis last seen
   }
+
+  digitalWrite(2, LOW); // turn off LED
 
   if (transmit_flag)
   {  
@@ -122,8 +140,8 @@ void loop() {
     // Send command info string here
     counter++;
     const char text[] = "Hello World";
-    char counter_string[16] = {0};
-    sprintf(counter_string, "Hello World: %d", counter);
+    char counter_string[32] = {0};
+    sprintf(counter_string, "%s,%d,%d", text, nodes[0].faction,nodes[0].mode);
     radio.write(&counter_string, sizeof(counter_string));
   
     radio.openReadingPipe(0, address);
@@ -132,9 +150,15 @@ void loop() {
     transmit_flag = 0;
   }
 
-  digitalWrite(2, LOW); // turn off LED
+  // Send this at 2Hz to all nodes
+  // data, node_number, faction, mode
+  if (start_transmitting)
+  {
+      // enable timer compare interrupt (transmission)
+      TIMSK1 |= (1 << OCIE1A);
+      start_transmitting = 0;
+  }
 }
-
 
 /*  Functions */
 
@@ -152,8 +176,8 @@ void init_timer1()
   TCCR1B |= (1 << WGM12);
   // Set CS12 and CS10 bits for 1024 prescaler
   TCCR1B |= (1 << CS12) | (1 << CS10);  
-  // enable timer compare interrupt
-  TIMSK1 |= (1 << OCIE1A);
+//  // enable timer compare interrupt
+//  TIMSK1 |= (1 << OCIE1A);
 
   sei();//allow interrupts
 }
