@@ -40,6 +40,8 @@ void setup() {
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
+  randomSeed(analogRead(0));
+  
   init_timer1();
   pixels.begin(); // Initialize NeoPixel Library
 
