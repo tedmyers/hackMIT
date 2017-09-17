@@ -28,12 +28,14 @@ void parse_text(char * text);
 volatile uint8_t counter;
 char data[32] = {0};
 volatile int nCounter = 1;
-char * recv_text;
+//char * recv_text;
+char recv_text[32];
 volatile bool transmit_flag = 0;
 char command_string[32] = {0};
 bool start_transmitting = 0;
 uint16_t iii; // counter variable
 char counter_string[64] = {0};
+const char comma[2] = ",";
 
 // Defines
 #define BUTTON_PIN 3
@@ -71,7 +73,7 @@ void setup() {
 
   init_all();
   display_splash();
-  delay(500);
+  delay(1000);
   choose_faction();
   delay(1000); // pause for a sec
   randomSeed(analogRead(0));
@@ -93,8 +95,8 @@ void loop() {
   if (radio.available()) {
     radio.read(&recv_text, sizeof(recv_text));
     digitalWrite(2, HIGH); // flash LED
-    parse_text(&recv_text);
-    
+    parse_text(recv_text);
+  
     //delay(50);
     nCounter++;
   }
@@ -134,30 +136,38 @@ void loop() {
 
 /*  Functions */
 
-void parse_text(char * text)
+void parse_text(char text[])
 {
-  //char str[] ="- This, a sample string.";
   char * tempstr;
+  tempstr = strtok(text,comma);
+  strcpy(data, tempstr);
+  //char* data = tempstr;
   
-  tempstr = strtok(text,",");
-  char* data = tempstr;
-  tempstr = strtok(text,",");
-  uint8_t faction = atoi(tempstr);
-  tempstr = strtok(text,",");
-  uint8_t mode = atoi(tempstr);
+  char * tempstr_faction;
+  tempstr_faction = strtok(text,comma);
+  nodes[1].faction = atoi(tempstr_faction);
 
-  char * tempstr_data, tempstr_faction, tempstr_mode;
-  sprintf(tempstr_data, "Data: ", data);
-  sprintf(tempstr_faction, "Faction #%d", faction);
-  sprintf(tempstr_mode, "Mode #%d", mode);
-  //sprintf(counter_string, "%s,%d,%d", nodes[0].data, nodes[0].faction,nodes[0].mode);
+  char * tempstr_mode;
+  tempstr_mode = strtok(text,comma);
+  nodes[1].mode = atoi(tempstr_mode);
+
+//  char * tempstr_data;
+//  char * tempstr_faction;
+//  char * tempstr_mode;
+//  sprintf(tempstr_faction, "Faction #%d", faction);
+//  sprintf(tempstr_mode, "Mode #%d", mode);
+//  char text2[64];
+//  sprintf(text2, "data:%s,faction:%d,mode:%d", nodes[1].data, nodes[1].faction,nodes[1].mode);
   
   // display stuff
   display.clearDisplay();
   display.setCursor(0,0);
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.print(recv_text);
+  display.print(text);
+  display.println(data);
+//  display.println(tempstr_faction);
+//  display.println(tempstr_mode);
   display.display();
   //end display stuff
 }
@@ -198,14 +208,14 @@ void new_node(void)
 void init_all(void)
 {
   FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
-
+  
   pinMode(2, OUTPUT); //LED
   pinMode(BUTTON_PIN, INPUT);
   digitalWrite(BUTTON_PIN, HIGH);
   
   // OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr for the 128x64
-
+  
   init_timer1();
 
   radio.begin();
@@ -283,7 +293,7 @@ void choose_faction(void)
     }
 
     if (nodes[0].faction == RED_FACTION)
-      { break; }
+    { break; }
     
     for (iii=0;iii<1000;iii++)
     {
@@ -301,15 +311,17 @@ void choose_faction(void)
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(WHITE);
-  display.setCursor(15,0);
+  display.setCursor(0,20);
   
   if ( nodes[0].faction == RED_FACTION )
   {
-    display.println("RED Faction Chosen");
+    display.println("RED");
+    display.println("Faction");
   }
   else if ( nodes[0].faction == BLUE_FACTION )
   {
-    display.println("BLUE Faction Chosen");
+    display.println("BLUE");
+    display.println("Faction");
   }
   else
   {
