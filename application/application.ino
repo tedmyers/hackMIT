@@ -11,6 +11,9 @@
 
 // Function prototypes
 void init_timer1(void);
+void display_splash(void);
+void choose_faction(void);
+void game_start(void);
 
 // Global Variables
 volatile uint8_t counter;
@@ -21,6 +24,12 @@ char recv_text[64];
 volatile bool transmit_flag = 0;
 char command_string[32] = {0};
 bool start_transmitting = 0;
+
+#define BUTTON_PIN 3
+
+#define UNDEF_FACTION 0
+#define RED_FACTION   1
+#define BLUE_FACTION  2
 
 #define MAX_NODES 3
 
@@ -156,29 +165,23 @@ void setup() {
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_HIGH);
   radio.startListening();
-
-  pinMode(2, OUTPUT);
+  
+  pinMode(2, OUTPUT); //LED
+  pinMode(BUTTON_PIN, INPUT);
+  digitalWrite(BUTTON_PIN, HIGH);
   
   // OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr for the 128x64
   
   //Initialize text, show temporary splash screen
-  display.clearDisplay();
-  display.setTextSize(3);
-  display.setTextColor(WHITE);
-  display.setCursor(30,0);
-  display.println("NOVA");
-  display.setTextSize(1.5);
-  display.setTextColor(BLACK, WHITE);
-  display.setCursor(21,24);
-  display.println("A Star is Born");
-  display.display();
-
-  delay(2000);
-
+  display_splash();
+  delay(500);
+  
   // Start animations
+  game_start();
 
   // Ask for faction
+  choose_faction();
 
   start_transmitting = 1; //remove later
 }
@@ -272,5 +275,99 @@ void init_timer1()
 //  TIMSK1 |= (1 << OCIE1A);
 
   sei();//allow interrupts
+}
+
+void display_splash(void)
+{
+  display.clearDisplay();
+  display.setTextSize(3);
+  display.setTextColor(WHITE);
+  display.setCursor(30,0);
+  display.println("NOVA");
+  display.setTextSize(1.5);
+  display.setTextColor(BLACK, WHITE);
+  display.setCursor(22,24);
+  display.println("A Star is Born");
+  display.display();
+
+  while ( digitalRead(BUTTON_PIN) == HIGH ) {};
+  
+}
+
+// Need to add LED functions in
+// I don't think this code works yet - always chooses blue
+void choose_faction(void)
+{
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  display.println("Choose a Faction");
+  display.setTextSize(1.5);
+  display.setCursor(20,40);
+  display.print("RED");
+  display.setCursor(80,40);
+  display.println("BLUE");
+  display.display();
+
+  uint16_t iii;
+  // cycle between colors every 1s
+  nodes[0].faction = UNDEF_FACTION;
+  while ( nodes[0].faction == UNDEF_FACTION ) 
+  {
+    for (iii=0;iii<1000;iii++)
+    {
+      //TODO: show red LEDs
+      if ( digitalRead(BUTTON_PIN) == LOW )
+      { 
+        nodes[0].faction = RED_FACTION;
+        break;
+      }
+      delay(1);
+    }
+    
+    for (iii=0;iii<1000;iii++)
+    {
+      //TODO: show blue LEDs
+      if ( digitalRead(BUTTON_PIN) == LOW )
+      { 
+        nodes[0].faction = BLUE_FACTION; 
+        break;
+      }
+      delay(1);
+    }
+  }
+
+  // Display result and exit
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(15,0);
+  if ( nodes[0].faction == RED_FACTION )
+  {
+    display.println("RED Faction Chosen");
+  }
+  else if ( nodes[0].faction == BLUE_FACTION )
+  {
+    display.println("BLUE Faction Chosen");
+  }
+  else
+  {
+    display.println("no faction chosen");
+  }
+      display.display();
+  
+  
+  delay(1000); // pause for a sec
+
+}
+
+void game_start(void)
+{
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(15,0);
+  
 }
 
