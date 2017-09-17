@@ -111,6 +111,8 @@ void setup() {
   else { //blue
     factionColor = CRGB::Blue;
   }
+
+  brightness = 128; //half brightness, level 5
   
   init_timer1();
   FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
@@ -460,6 +462,164 @@ void bootAnim() {
     delay(75);
   
   }
+
+  FastLED.setBrightness(brightness);
   
 }
 
+void happy() {
+  int delayTime = 150; //delay time in ms
+  //Single dot chase.
+
+  //Write all black.`
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+
+  //Write first yellow
+  leds[0] = CRGB::Yellow;
+
+  FastLED.show();
+
+  //Cycle through to the end, then bounce back twice
+
+  for (int x = 0; x < 1; x++)
+  { 
+    for (int i = 0; i < numLeds; i++)
+    {
+      leds[i] = CRGB::Yellow;
+      FastLED.show();
+      leds[i] = CRGB::Black;
+  
+      delay(delayTime);
+    }
+  
+    for (int i = numLeds-2; i > 0; i--)
+    {
+      leds[i] = CRGB::Yellow;
+      FastLED.show();
+      leds[i] = CRGB::Black;
+  
+      delay(delayTime);
+    }
+  }
+
+  //Flash all twice
+   //Write all yellow.
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Yellow;
+  }
+
+  FastLED.show();
+
+  delay(300);
+
+     //Write all yellow.
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+
+  FastLED.show();
+
+  delay(300);
+
+     //Write all yellow.
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Yellow;
+  }
+
+  FastLED.show();
+
+  delay(300);
+
+     //Write all yellow.
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+
+  FastLED.show();
+
+  delay(300);
+}
+
+void sad() {
+  int delayTime = 150; //delay time in ms
+  //Single dot chase.
+
+  //Write all black.`
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+
+  //Write first yellow
+  leds[0] = CRGB::Red;
+
+  FastLED.show();
+
+  //Cycle through to the end, then bounce back twice
+
+  for (int x = 0; x < 1; x++)
+  { 
+    for (int i = 0; i < numLeds; i++)
+    {
+      leds[i] = CRGB::Red;
+      FastLED.show();
+      leds[i] = CRGB::Black;
+  
+      delay(delayTime);
+    }
+  
+    for (int i = numLeds-2; i > 0; i--)
+    {
+      leds[i] = CRGB::Red;
+      FastLED.show();
+      leds[i] = CRGB::Black;
+  
+      delay(delayTime);
+    }
+  }
+
+  //Flash all twice
+   //Write all yellow.
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Red;
+  }
+
+  FastLED.show();
+
+  delay(300);
+
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+
+  FastLED.show();
+
+  delay(300);
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Red;
+  }
+
+  FastLED.show();
+
+  delay(300);
+
+     //Write all yellow.
+  for (int i = 0; i < numLeds; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+
+  FastLED.show();
+
+  delay(300);
+}
