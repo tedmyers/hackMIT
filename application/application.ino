@@ -20,6 +20,7 @@ volatile int nCounter = 1;
 char recv_text[64];
 volatile bool transmit_flag = 0;
 char command_string[32] = {0};
+bool start_transmitting = 0;
 
 #define MAX_NODES 3
 
@@ -82,6 +83,12 @@ void setup() {
   display.display();
   
   delay(500);
+
+  // Start animations
+
+  // Ask for faction
+
+  start_transmitting = 1; //remove later
 }
 
 ISR(TIMER1_COMPA_vect)
@@ -91,13 +98,8 @@ ISR(TIMER1_COMPA_vect)
 
 void loop() {
   
-  // Send this at 2Hz to all nodes
-  // data, node_number, faction, mode
-  
-  // mode = peace, challenge (challenge starting dependent on other visible factions)
-  //
-  // change later
-  //sprintf(command_string,"%s,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
+  // Ask to choose faction
+  // 
 
   // For now just test colors
   for(int i=0;i<NUMPIXELS;i++){
@@ -148,14 +150,15 @@ void loop() {
     transmit_flag = 0;
   }
 
-  // test: only start transmitting after 10s 
-  if (millis()>10000)
+  // Send this at 2Hz to all nodes
+  // data, node_number, faction, mode
+  if (start_transmitting)
   {
       // enable timer compare interrupt (transmission)
       TIMSK1 |= (1 << OCIE1A);
+      start_transmitting = 0;
   }
 }
-
 
 /*  Functions */
 
