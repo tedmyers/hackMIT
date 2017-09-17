@@ -24,6 +24,7 @@ char recv_text[64];
 volatile bool transmit_flag = 0;
 char command_string[32] = {0};
 bool start_transmitting = 0;
+uint16_t iii; // counter variable
 
 #define BUTTON_PIN 3
 
@@ -176,12 +177,13 @@ void setup() {
   //Initialize text, show temporary splash screen
   display_splash();
   delay(500);
-  
-  // Start animations
-  game_start();
 
   // Ask for faction
   choose_faction();
+  delay(1000); // pause for a sec
+
+  // Start animations
+  game_start();
 
   start_transmitting = 1; //remove later
 }
@@ -310,7 +312,6 @@ void choose_faction(void)
   display.println("BLUE");
   display.display();
 
-  uint16_t iii;
   // cycle between colors every 1s
   nodes[0].faction = UNDEF_FACTION;
   while ( nodes[0].faction == UNDEF_FACTION ) 
@@ -339,10 +340,11 @@ void choose_faction(void)
   }
 
   // Display result and exit
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.setCursor(15,0);
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  
   if ( nodes[0].faction == RED_FACTION )
   {
     display.println("RED Faction Chosen");
@@ -356,18 +358,50 @@ void choose_faction(void)
     display.println("no faction chosen");
   }
       display.display();
-  
-  
-  delay(1000); // pause for a sec
 
 }
 
 void game_start(void)
 {
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.setCursor(15,0);
-  
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  display.print("A Star is Born");
+  display.display();
+  delay(1000);
+
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  display.print("A Star is Born.");
+  display.display();
+  delay(1000);
+
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  display.print("A Star is Born..");
+  display.display();
+  delay(1000);
+
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  display.print("A Star is Born...");
+  display.display();
+  delay(1000);
+
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  display.print("A Star is Born....");
+  display.display();
+  delay(1000);
+    
 }
 
