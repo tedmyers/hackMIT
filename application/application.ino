@@ -5,8 +5,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <FastLED.h>
+
 #ifdef __AVR__
   #include <avr/power.h>
+#endif
+#if defined (__AVR_ATtiny85__)
+  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
 // Function prototypes
@@ -14,10 +18,12 @@ void init_timer1(void);
 void display_splash(void);
 void choose_faction(void);
 void game_start(void);
+void init_all(void);
+void setAll(CRGB color);
+void bootAnim();
 
 // Global Variables
 volatile uint8_t counter;
-//uint8_t node_number, faction, happiness_level;
 char data[32] = {0};
 volatile int nCounter = 1;
 char recv_text[64];
@@ -28,13 +34,16 @@ uint16_t iii; // counter variable
 
 // Defines
 #define BUTTON_PIN 3
-#define UNDEF_FACTION   0
 #define RED_FACTION     1
 #define BLUE_FACTION    2
 #define MAX_NODES       3
+#define OLED_RESET      4
 #define PIN             6
 #define NUMPIXELS       5
-#define OLED_RESET      4
+#define UNDEF_FACTION   0
+#define UNDEF_MODE      0
+#define BATTLE_MODE     1 
+
 
 // Struct with node data
 struct node {
@@ -56,54 +65,17 @@ CRGB factionColor;
 int brightness;
 
 void setup() {
-#if defined (__AVR_ATtiny85__)
-  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-#endif
 
-  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
-
-  pinMode(2, OUTPUT); //LED
-  pinMode(BUTTON_PIN, INPUT);
-  digitalWrite(BUTTON_PIN, HIGH);
+  init_all();
   
-  // OLED display
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr for the 128x64
-  
-  //Initialize text, show temporary splash screen
   display_splash();
   delay(500);
 
-  // Ask for faction
   choose_faction();
   delay(1000); // pause for a sec
-  
+
   randomSeed(analogRead(0));
-
-  if (nodes[0].faction == RED_FACTION) { //red
-    factionColor = CRGB::Red;
-  }
-  else if (nodes[0].faction == BLUE_FACTION)
-  {
-    factionColor = CRGB::Blue;
-  }
-  else
-  {
-    //error
-    display.clearDisplay();
-    display.setCursor(0,0);
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.print("err: no faction defined");
-    display.display();
-  }
-  
-  init_timer1();
-
-
-  radio.begin();
-  radio.openReadingPipe(0, address);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.startListening();
+  basicColor = CRGB(random(255), random(255),random(255));
 
   // Start animations
   game_start();
@@ -174,6 +146,25 @@ void loop() {
 
 /*  Functions */
 
+void init_all(void)
+{
+  FastLED.addLeds<NEOPIXEL,PIN>(leds, NUMPIXELS); //Initialize leds
+
+  pinMode(2, OUTPUT); //LED
+  pinMode(BUTTON_PIN, INPUT);
+  digitalWrite(BUTTON_PIN, HIGH);
+  
+  // OLED display
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr for the 128x64
+
+  init_timer1();
+
+  radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_HIGH);
+  radio.startListening();
+}
+
 void init_timer1()
 {
   cli();//stop interrupts
@@ -193,7 +184,6 @@ void init_timer1()
 
   sei();//allow interrupts
 }
-
 
 void display_splash(void)
 {
@@ -240,7 +230,6 @@ void choose_faction(void)
         nodes[0].faction = RED_FACTION;
         break;
       }
-      
       delay(1);
     }
 
@@ -325,7 +314,6 @@ void game_start(void)
     
 }
 
-
 //Function sets all leds the indicated color. Useful for blackouts or washes.
 void setAll(CRGB color) {
   for (int i = 0; i < NUMPIXELS; i++)
@@ -337,6 +325,18 @@ void setAll(CRGB color) {
 
 //Function called for the "birth" of the star - plays boot anim. Hardcoded boot anim. Assumes LED 3 is mid.
 void bootAnim() {
+
+  if (nodes[0].faction == RED_FACTION) { //red
+    factionColor = CRGB::Red;
+  }
+  else if (nodes[0].faction == BLUE_FACTION)
+  {
+    factionColor = CRGB::Blue;
+  }
+  else
+  { //error
+  }
+  
  FastLED.setBrightness(50); //very faint start
   //blackout
   setAll(CRGB::Black);
@@ -416,12 +416,8 @@ void bootAnim() {
       continue;
     }
     leds[i] =  basicColor;
-
     FastLED.show();
-  
     delay(75);
-  
   }
-  
 }
 
