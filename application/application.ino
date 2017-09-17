@@ -26,10 +26,10 @@ char command_string[32] = {0};
 // Struct with node data
 struct node {
   char data[8];
-  uint8_t node_number;
+//  uint8_t node_number;
   uint8_t faction;
   uint8_t mode;
-  uint64_t last_seen;
+//  uint32_t last_seen;
 } nodes[MAX_NODES];
 
 // neopixel
@@ -52,21 +52,21 @@ void setup() {
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
 #endif
 
-  //Generate identifier, from 0 to 2048
-  pinMode(0, INPUT);
-  randomSeed(analogRead(0));
-  nodes[0].node_number = random(2048);
+//  //Generate identifier, from 0 to 2048
+//  pinMode(0, INPUT);
+//  randomSeed(analogRead(0));
+//  nodes[0].node_number = random(2048);
   
   init_timer1();
   pixels.begin(); // Initialize NeoPixel Library
-
+  
   radio.begin();
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_HIGH);
   radio.startListening();
 
   pinMode(2, OUTPUT);
-
+  
   // OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr for the 128x64
   
@@ -139,13 +139,20 @@ void loop() {
     counter++;
     const char text[] = "Hello World";
     char counter_string[32] = {0};
-    sprintf(counter_string, "%s,%d,%d,%d", text, counter,counter,counter);
+    sprintf(counter_string, "%s,%d,%d", text, nodes[0].faction,nodes[0].mode);
     radio.write(&counter_string, sizeof(counter_string));
   
     radio.openReadingPipe(0, address);
     radio.setPALevel(RF24_PA_HIGH);
     radio.startListening();
     transmit_flag = 0;
+  }
+
+  // test: only start transmitting after 10s 
+  if (millis()>10000)
+  {
+      // enable timer compare interrupt (transmission)
+      TIMSK1 |= (1 << OCIE1A);
   }
 }
 
@@ -166,8 +173,8 @@ void init_timer1()
   TCCR1B |= (1 << WGM12);
   // Set CS12 and CS10 bits for 1024 prescaler
   TCCR1B |= (1 << CS12) | (1 << CS10);  
-  // enable timer compare interrupt
-  TIMSK1 |= (1 << OCIE1A);
+//  // enable timer compare interrupt
+//  TIMSK1 |= (1 << OCIE1A);
 
   sei();//allow interrupts
 }
