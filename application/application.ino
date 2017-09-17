@@ -23,19 +23,22 @@ void setAll(CRGB color);
 void bootAnim(void);
 void begin_battle(void);
 void parse_text(char * text);
+void new_node_temp(void);
+void display_brightness(void);
 
 // Global Variables
 volatile uint8_t counter;
 char data[32] = {0};
 volatile int nCounter = 1;
 //char * recv_text;
-char recv_text[32];
+char recv_text[32] = "";
 volatile bool transmit_flag = 0;
 char command_string[32] = {0};
 bool start_transmitting = 0;
 uint16_t iii; // counter variable
 char counter_string[64] = {0};
 const char comma[2] = ",";
+char bright_string[2];
 
 // Defines
 #define BUTTON_PIN 3
@@ -53,11 +56,13 @@ const char comma[2] = ",";
 // Struct with node data
 struct node {
   char data[8];
-//  uint8_t node_number;
   uint8_t faction;
   uint8_t mode;
-//  uint32_t last_seen;
+  uint8_t brightness;
 } nodes[MAX_NODES];
+// Later: more nodes?
+//  uint8_t node_number;
+//  uint32_t last_seen;
 
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -95,10 +100,12 @@ void loop() {
   if (radio.available()) {
     radio.read(&recv_text, sizeof(recv_text));
     digitalWrite(2, HIGH); // flash LED
-    parse_text(recv_text);
-  
-    //delay(50);
-    nCounter++;
+
+    if ( recv_text[0] == "1" ); // red team
+    { nodes[1].faction = RED_FACTION; }
+    
+    new_node_temp(); // interact w/node
+    //parse_text(recv_text);
   }
   digitalWrite(2, LOW); // turn off LED
 
@@ -128,6 +135,9 @@ void loop() {
       TIMSK1 |= (1 << OCIE1A);
       start_transmitting = 0;
   }
+
+  // usually display brightness
+  display_brightness();
 }
 
 
@@ -151,28 +161,40 @@ void parse_text(char text[])
   tempstr_mode = strtok(text,comma);
   nodes[1].mode = atoi(tempstr_mode);
 
-//  char * tempstr_data;
-//  char * tempstr_faction;
-//  char * tempstr_mode;
-//  sprintf(tempstr_faction, "Faction #%d", faction);
-//  sprintf(tempstr_mode, "Mode #%d", mode);
-//  char text2[64];
-//  sprintf(text2, "data:%s,faction:%d,mode:%d", nodes[1].data, nodes[1].faction,nodes[1].mode);
-  
-  // display stuff
+    // display stuff
   display.clearDisplay();
   display.setCursor(0,0);
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.print(text);
-  display.println(data);
+  //display.println(text2);
 //  display.println(tempstr_faction);
 //  display.println(tempstr_mode);
   display.display();
   //end display stuff
+
+//  char * tempstr_data;
+//  char * tempstr_faction;
+//  char * tempstr_mode;
+//  sprintf(tempstr_faction, "Faction #%d", faction);
+//  sprintf(tempstr_mode, "Mode #%d", mode);
+  char text2[64];
+  sprintf(text2, "data:%s,faction:%d,mode:%d", nodes[1].data, nodes[1].faction,nodes[1].mode);
+  
+//  // display stuff
+//  display.clearDisplay();
+//  display.setCursor(0,0);
+//  display.setTextSize(1);
+//  display.setTextColor(WHITE);
+//  display.print(text);
+//  //display.println(text2);
+////  display.println(tempstr_faction);
+////  display.println(tempstr_mode);
+//  display.display();
+//  //end display stuff
 }
 
-void new_node(void)
+void new_node_temp(void)
 {
   if ( nodes[1].faction == nodes[0].faction )
   { // gain +1 brightness
@@ -488,6 +510,16 @@ void begin_battle(void)
 
   // Wait for up to (10s?) for another player to enter battle mode
 
+}
 
+void display_brightness(void)
+{
+  display.clearDisplay();
+  display.setTextSize(5);
+  display.setTextColor(WHITE);
+  display.setCursor(15,0);
+  sprintf(bright_string, "%d", nodes[0].brightness);
+  display.print(bright_string);
+  display.display();
 }
 

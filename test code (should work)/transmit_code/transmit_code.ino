@@ -26,8 +26,8 @@ void setup() {
 
 void loop() {
   counter++;
-  const char text[] = "Hello World";
-  sprintf(counter_string, "Hello World: %d", counter);
+  const char text[] = "1"; // red faction
+  //sprintf(counter_string, "data,1,2,%d", counter);
   radio.write(&counter_string, sizeof(counter_string));
   delay(500);
 }
