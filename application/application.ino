@@ -17,7 +17,9 @@ volatile uint8_t counter;
 uint8_t node_number, faction, happiness_level;
 char data[32] = {0};
 volatile int nCounter = 1;
-char command_string[256] = {0};
+char recv_text[32];
+volatile int transmit_flag = 0;
+//char command_string[256] = {0};
 
 // neopixel
 #define PIN            6
@@ -68,21 +70,7 @@ void setup() {
 
 ISR(TIMER1_COMPA_vect)
 {
-  //occurs w/frequency of 2Hz
-  radio.openWritingPipe(address);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.stopListening();
-
-  // Send command info string here
-  counter++;
-  const char text[] = "Hello World";
-  char counter_string[16] = {0};
-  sprintf(counter_string, "Hello World: %d", counter);
-  radio.write(&counter_string, sizeof(counter_string));
-
-  radio.openReadingPipe(0, address);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.startListening();
+  transmit_flag = 1;
 }
 
 void loop() {
@@ -90,8 +78,8 @@ void loop() {
   // Send this at 2Hz to all nodes
   // data, node_number, faction, happiness level
   // change later
-  node_number=1;faction=2;happiness_level=3;
-  sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
+//  node_number=1;faction=2;happiness_level=3;
+//  sprintf(command_string,"%c,%d,%d,%d\n\r",data,node_number,faction,happiness_level);
   
   // For now, just test colors
   for(int i=0;i<NUMPIXELS;i++){
@@ -101,23 +89,45 @@ void loop() {
   }
   
   if (radio.available()) {
-    char text[];
-    text = (char *) malloc(128);
     
-    radio.read(&text, sizeof(text));
+    radio.read(&recv_text, sizeof(recv_text));
+//    radio.read(&text, sizeof(text));
     digitalWrite(2, HIGH); // flash LED
-
+    
     // display stuff
     display.clearDisplay();
     display.setCursor(0,0);
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.print(text);
+    display.print(recv_text); //
     display.display();
     //end display stuff
+
+//    free(recv_text);
     
     delay(50);
     nCounter++;
+  }
+
+  if (transmit_flag)
+  {
+    //occurs w/frequency of 2Hz
+    radio.openWritingPipe(address);
+    radio.setPALevel(RF24_PA_HIGH);
+    radio.stopListening();
+  
+    // Send command info string here
+    counter++;
+    const char text[] = "Hello World";
+    char counter_string[16] = {0};
+    sprintf(counter_string, "Hello World: %d", counter);
+    radio.write(&counter_string, sizeof(counter_string));
+  
+    radio.openReadingPipe(0, address);
+    radio.setPALevel(RF24_PA_HIGH);
+    radio.startListening();
+
+    transmit_flag = 0;
   }
 
   digitalWrite(2, LOW); // turn off LED
